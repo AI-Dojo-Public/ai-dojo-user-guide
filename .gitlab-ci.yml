@@ -1,0 +1,137 @@
+default:
+  interruptible: true
+  artifacts:
+    expire_in: 30 days
+
+stages:
+  - build
+  - deploy
+  - cleanup
+
+terraform_plan:
+  stage: build
+  image:
+    name: "$CI_TEMPLATE_REGISTRY_HOST/gitlab-org/terraform-images/releases/1.4:v1.0.0"
+  environment:
+    name: MUNI_Openstack
+    action: prepare
+  variables:
+    TF_ROOT: ${CI_PROJECT_DIR}/demo-2023/deployment/
+    # Download path for Secure files cannot be an absolute path because it automatically adds '.' to the beginning of the path.
+    # See https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/issues/9
+    SECURE_FILES_DOWNLOAD_PATH: ./demo-2023/deployment/
+    TF_STATE_NAME: default
+    TF_VAR_public_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}.pub
+    TF_VAR_private_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}
+  cache:
+    key: "${TF_ROOT}"
+    paths:
+      - ${TF_ROOT}/.terraform/
+  before_script:
+    - apk update
+    - apk add --no-cache curl bash
+  script:
+    - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | bash
+    - chmod -R a+r ${TF_ROOT}
+    - chmod 400 ${TF_VAR_private_key}
+    - gitlab-terraform plan
+    - gitlab-terraform plan-json
+  resource_group: ${TF_STATE_NAME}
+  artifacts:
+    public: false
+    paths:
+      - ${TF_ROOT}/plan.cache
+    reports:
+      terraform: ${TF_ROOT}/plan.json
+
+terraform_deployment:
+  stage: deploy
+  image:
+    name: "$CI_TEMPLATE_REGISTRY_HOST/gitlab-org/terraform-images/releases/1.4:v1.0.0"
+  environment:
+    name: MUNI_Openstack
+    url: https://gitlab.ics.muni.cz/ai-dojo/ai-dojo/-/jobs/$CI_JOB_ID/artifacts/download
+    action: start
+  variables:
+    TF_ROOT: ${CI_PROJECT_DIR}/demo-2023/deployment/
+    SECURE_FILES_DOWNLOAD_PATH: ./demo-2023/deployment/
+    TF_STATE_NAME: default
+    TF_VAR_public_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}.pub
+    TF_VAR_private_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}
+  before_script:
+    - apk update
+    - apk add --no-cache curl bash ansible
+    - ansible-galaxy collection install community.docker
+  script:
+    - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | bash
+    - chmod -R a+r ${TF_ROOT}
+    - chmod 400 ${TF_VAR_private_key}
+    - gitlab-terraform apply
+    - gitlab-terraform output -raw ansible_command > ansible_command.sh
+    - gitlab-terraform output -raw ssh_command > ssh_command.sh
+  resource_group: ${TF_STATE_NAME}
+  artifacts:
+    public: false
+    paths:
+      - ansible_command.sh
+      - ssh_command.sh
+  needs:
+    - job: terraform_plan
+      artifacts: true
+
+ansible_provisioning:
+  stage: deploy
+  image: ubuntu:latest
+  dependencies:
+    - terraform_deployment
+  variables:
+    UBUNTU_CODENAME: jammy
+    TF_ROOT: ${CI_PROJECT_DIR}/demo-2023/deployment/
+    SECURE_FILES_DOWNLOAD_PATH: ./demo-2023/deployment/
+    TF_VAR_private_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}
+  before_script:
+    - apt-get update
+    - apt-get install -y software-properties-common curl
+    - add-apt-repository --yes --update ppa:ansible/ansible
+    - apt-get install -y ansible
+    - ansible-galaxy collection install community.docker
+  script:
+    - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | bash
+    - chmod -R a+r ${TF_ROOT}
+    - chmod 400 ${TF_VAR_private_key}
+    - chmod +x ansible_command.sh
+    - mv ./ansible_command.sh ${CI_PROJECT_DIR}/demo-2023/deployment/ansible_command.sh
+    - cd ${CI_PROJECT_DIR}/demo-2023/deployment/
+    - ./ansible_command.sh
+  needs:
+    - job: terraform_deployment
+      artifacts: true
+  when: manual
+
+terraform_destroy:
+  stage: cleanup
+  image:
+    name: "$CI_TEMPLATE_REGISTRY_HOST/gitlab-org/terraform-images/releases/1.4:v1.0.0"
+  environment:
+    name: MUNI_Openstack
+  variables:
+    TF_ROOT: ${CI_PROJECT_DIR}/demo-2023/deployment/
+    SECURE_FILES_DOWNLOAD_PATH: ./demo-2023/deployment/
+    TF_STATE_NAME: default
+    TF_VAR_public_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}.pub
+    TF_VAR_private_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}
+  cache:
+    key: "${TF_ROOT}"
+    paths:
+      - ${TF_ROOT}/.terraform/
+  before_script:
+    - apk update
+    - apk add --no-cache curl bash
+  script:
+    - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | bash
+    - chmod -R a+r ${TF_ROOT}
+    - chmod 400 ${TF_VAR_private_key}
+    - gitlab-terraform destroy
+  resource_group: ${TF_STATE_NAME}
+  when: manual
+  needs: []
