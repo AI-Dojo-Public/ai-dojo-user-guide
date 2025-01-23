@@ -56,6 +56,15 @@ resource "openstack_compute_instance_v2" "dr-emu" {
   flavor_name = var.compute_instance_flavor
   key_pair = openstack_compute_keypair_v2.dr-emu-key.name
 
+  // Workaround for updating a key pair in existing instance:
+  // replace_triggered_by forces Terraform to recreate the instance when key pair changes.
+  // This will guarantee that the new key will work.
+  lifecycle {
+    replace_triggered_by = [
+      openstack_compute_keypair_v2.dr-emu-key.id
+    ]
+  }
+
   block_device {
     uuid = data.openstack_images_image_v2.image.id
     source_type = "image"
@@ -70,7 +79,7 @@ resource "openstack_compute_instance_v2" "dr-emu" {
   }
 }
 
-resource "null_resource" "ansible-deployment" {
+resource "null_resource" "wait_for_ssh" {
 
   provisioner "remote-exec" {  # HACK: wait for the ssh connection
     inline = ["echo 'ssh is up!'"]
@@ -83,30 +92,11 @@ resource "null_resource" "ansible-deployment" {
     }
   }
 
-  provisioner "local-exec" {
-    command = <<-EOT
-    echo "Running ansible playbook."
-    echo "It takes some time to run sshd on vm"
-    echo "In case of failure, simply rerun <terraform apply>"
-    ansible-playbook \
-    -i "${openstack_networking_floatingip_v2.fip.address}," \
-    -u ${var.compute_instance_user} \
-    --private-key ${var.private_key} \
-    --ssh-extra-args='-o IdentitiesOnly=yes' \
-    -e "dojo_token=${var.dojo_token} cyst_core_token=${var.cyst_core_token} cyst_platform_token=${var.cyst_platform_token} cyst_models_token=${var.cyst_models_token}" \
-    ./ansible.yaml
-          EOT
-
-    environment = {
-      ANSIBLE_HOST_KEY_CHECKING = "False"
-    }
+  lifecycle {
+    replace_triggered_by = [
+      openstack_compute_instance_v2.dr-emu.id
+    ]
   }
-
-  triggers = {
-    # The timestamp changes every time, forcing Terraform to redeploy (rerun) the Ansible playbook.
-    deploy_time = timestamp()
-  }
-
 }
 
 output "username" {
@@ -133,7 +123,21 @@ output "ansible_command" {
   ]) : join("", [
     "Ansible command could not be generated. You have to specify all optional variables:\n",
     "\tTF_VAR_private_key=path/to/your/key\n",
-    "\tTF_VAR_gitlab_token=token  # token for cyst/cyst-core repository\n",
+    "\tTF_VAR_dojo_token=  # token for ai-dojo/ai-dojo repository\n",
+    "\tTF_VAR_cyst_core_token=  # token for cyst/cyst-core repository\n",
+    "\tTF_VAR_cyst_platform_token=  # token for cyst/cyst-platform repository\n",
+    "\tTF_VAR_cyst_models_token=  # token for cyst/cyst-models repository\n",
   ])
 }
 
+output "ansible_run_command" {
+  value = var.private_key != "" ? join("", [
+    "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i \"${openstack_networking_floatingip_v2.fip.address},\" ",
+    "-u ${var.compute_instance_user} --private-key ${var.private_key} ",
+    "--ssh-extra-args='-o IdentitiesOnly=yes' ",
+    "-e \"simu_or_real=$1\" ansible_run.yaml\n"
+  ]) : join("", [
+    "Ansible command could not be generated. You have to specify all optional variables:\n",
+    "\tTF_VAR_private_key=path/to/your/key\n",
+  ])
+}

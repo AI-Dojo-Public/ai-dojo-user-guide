@@ -60,6 +60,8 @@ Another option how to run the demo is to use prepared [Ansible playbook](./deplo
 ### Requirements
 #### Control Node
 - access tokens to CYST repositories and ai-dojo repository
+  - role: Reporter
+  - scope: read_repository
 - Ansible installed
 - SSH connection with SSH key authentication to managed node
 
@@ -70,7 +72,12 @@ Another option how to run the demo is to use prepared [Ansible playbook](./deplo
 
 ### Steps to run the demo via Ansible
 1. Check the os variable at the beginning of the [`ansible.yaml`](./deployment/ansible.yaml) and select the correct OS.
-2. Run the following command (fill in IP, username, path to the private key, and four access tokens):
+2. Run the following command:
 ```shell
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i "<IP>," -u <username> --private-key <private_key> --ssh-extra-args='-o IdentitiesOnly=yes' -e "dojo_token=<token> cyst_core_token=<token> cyst_platform_token=<token> cyst_models_token=<token>" ./deployment/ansible.yaml
 ```
+where:
+- `<IP>` is an IP address of the managed node. **Note:** Comma after the IP address is not a typo and it is necessary.
+- `<username>` is username for user on the managed node.
+- `<private_key>` is SSH private key for accessing managed node with the username.
+- `<token>` are 4 different tokens to access needed CYST repositories and this repository. These tokens must have at least the *Reporter* role and the *read_repository* scope.

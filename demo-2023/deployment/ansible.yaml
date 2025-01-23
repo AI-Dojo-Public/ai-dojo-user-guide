@@ -1,11 +1,18 @@
 ---
 - name: Install Docker
-  vars:
-    os: "ubuntu"  # ubuntu or debian
   tags: docker
   hosts: all
   become: yes
   tasks:
+    - name: Check if OS is Debian or Ubuntu
+      set_fact:
+        os: "{{ ansible_facts['distribution'] | lower }}"
+      when: ansible_facts['distribution'] in ['Debian', 'Ubuntu']
+
+    - name: Detected OS
+      debug:
+        msg: "OS detected: {{ os }}"
+
     - name: Install ca-certificates and curl
       apt:
         name:
@@ -143,26 +150,3 @@
     - name: install cyst-models-dojo-cryton package
       command:
         cmd: /home/{{ ansible_user }}/ai-dojo/cyst-models-dojo-cryton/venv/bin/pip install /home/{{ ansible_user }}/ai-dojo/cyst-models-dojo-cryton
-
-- name: Run demo
-  tags: ai-dojo-demo
-  hosts: all
-  become: no
-  tasks:
-    - name: run simulation
-      command:
-        cmd: /home/{{ ansible_user }}/ai-dojo/cyst-models-dojo-cryton/venv/bin/python /home/{{ ansible_user }}/ai-dojo/cyst-models-dojo-cryton/scenarios/demo_2023.py simu
-      register: simu_output
-
-    - name: print simulation output
-      debug:
-        var: simu_output.stdout_lines
-
-    - name: run emulation
-      command:
-        cmd: /home/{{ ansible_user }}/ai-dojo/cyst-models-dojo-cryton/venv/bin/python /home/{{ ansible_user }}/ai-dojo/cyst-models-dojo-cryton/scenarios/demo_2023.py real
-      register: real_output
-
-    - name: print emulation output
-      debug:
-        var: real_output.stdout_lines
