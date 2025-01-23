@@ -1,0 +1,15 @@
+- name: Run demo
+  tags: ai-dojo-demo
+  hosts: all
+  become: no
+  tasks:
+    - name: run {{ simu_or_real }}
+      command:
+        cmd: /home/{{ ansible_user }}/ai-dojo/cyst-models-dojo-cryton/venv/bin/python /home/{{ ansible_user }}/ai-dojo/cyst-models-dojo-cryton/scenarios/demo_2023.py {{ simu_or_real }}
+      register: output
+      ignore_errors: true
+
+    - name: print {{ simu_or_real }} output
+      debug:
+        var: output.stdout_lines
+      failed_when: false

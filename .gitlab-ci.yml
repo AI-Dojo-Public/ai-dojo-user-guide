@@ -6,6 +6,7 @@ default:
 stages:
   - build
   - deploy
+  - run
   - cleanup
 
 terraform_plan:
@@ -21,28 +22,30 @@ terraform_plan:
     # See https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/issues/9
     SECURE_FILES_DOWNLOAD_PATH: ./demo-2023/deployment/
     TF_STATE_NAME: default
-    TF_VAR_public_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}.pub
-    TF_VAR_private_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}
+    TF_VAR_public_key: ${TF_ROOT}ssh-keys/ai-dojo-key.pub
+    TF_VAR_private_key: ${TF_ROOT}ssh-keys/ai-dojo-key
   cache:
     key: "${TF_ROOT}"
     paths:
-      - ${TF_ROOT}/.terraform/
+      - ${TF_ROOT}.terraform/
   before_script:
     - apk update
     - apk add --no-cache curl bash
+    - mkdir ${TF_ROOT}ssh-keys
+    - ssh-keygen -f ${TF_ROOT}ssh-keys/ai-dojo-key -N "" -C ai-dojo-key
   script:
     - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | bash
     - chmod -R a+r ${TF_ROOT}
-    - chmod 400 ${TF_VAR_private_key}
     - gitlab-terraform plan
     - gitlab-terraform plan-json
   resource_group: ${TF_STATE_NAME}
   artifacts:
     public: false
     paths:
-      - ${TF_ROOT}/plan.cache
+      - ${TF_ROOT}plan.cache
+      - ${TF_ROOT}ssh-keys/
     reports:
-      terraform: ${TF_ROOT}/plan.json
+      terraform: ${TF_ROOT}plan.json
 
 terraform_deployment:
   stage: deploy
@@ -56,25 +59,26 @@ terraform_deployment:
     TF_ROOT: ${CI_PROJECT_DIR}/demo-2023/deployment/
     SECURE_FILES_DOWNLOAD_PATH: ./demo-2023/deployment/
     TF_STATE_NAME: default
-    TF_VAR_public_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}.pub
-    TF_VAR_private_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}
+    TF_VAR_public_key: ${TF_ROOT}ssh-keys/ai-dojo-key.pub
+    TF_VAR_private_key: ${TF_ROOT}ssh-keys/ai-dojo-key
   before_script:
     - apk update
-    - apk add --no-cache curl bash ansible
-    - ansible-galaxy collection install community.docker
+    - apk add --no-cache curl bash
   script:
     - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | bash
     - chmod -R a+r ${TF_ROOT}
-    - chmod 400 ${TF_VAR_private_key}
     - gitlab-terraform apply
     - gitlab-terraform output -raw ansible_command > ansible_command.sh
     - gitlab-terraform output -raw ssh_command > ssh_command.sh
+    - gitlab-terraform output -raw ansible_run_command > ansible_run_command.sh
   resource_group: ${TF_STATE_NAME}
   artifacts:
     public: false
     paths:
       - ansible_command.sh
       - ssh_command.sh
+      - ansible_run_command.sh
+      - ${TF_ROOT}ssh-keys/
   needs:
     - job: terraform_plan
       artifacts: true
@@ -88,7 +92,7 @@ ansible_provisioning:
     UBUNTU_CODENAME: jammy
     TF_ROOT: ${CI_PROJECT_DIR}/demo-2023/deployment/
     SECURE_FILES_DOWNLOAD_PATH: ./demo-2023/deployment/
-    TF_VAR_private_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}
+    TF_VAR_private_key: ${TF_ROOT}ssh-keys/ai-dojo-key
   before_script:
     - apt-get update
     - apt-get install -y software-properties-common curl
@@ -106,6 +110,65 @@ ansible_provisioning:
   needs:
     - job: terraform_deployment
       artifacts: true
+
+run_simulation:
+  stage: run
+  image: ubuntu:latest
+  dependencies:
+    - terraform_deployment
+  variables:
+    UBUNTU_CODENAME: jammy
+    TF_ROOT: ${CI_PROJECT_DIR}/demo-2023/deployment/
+    SECURE_FILES_DOWNLOAD_PATH: ./demo-2023/deployment/
+    TF_VAR_private_key: ${TF_ROOT}ssh-keys/ai-dojo-key
+  before_script:
+    - apt-get update
+    - apt-get install -y software-properties-common curl
+    - add-apt-repository --yes --update ppa:ansible/ansible
+    - apt-get install -y ansible
+    - ansible-galaxy collection install community.docker
+  script:
+    - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | bash
+    - chmod -R a+r ${TF_ROOT}
+    - chmod 400 ${TF_VAR_private_key}
+    - chmod +x ansible_run_command.sh
+    - mv ./ansible_run_command.sh ${CI_PROJECT_DIR}/demo-2023/deployment/ansible_run_command.sh
+    - cd ${CI_PROJECT_DIR}/demo-2023/deployment/
+    - ./ansible_run_command.sh simu
+  needs:
+    - job: terraform_deployment
+      artifacts: true
+    - job: ansible_provisioning
+  when: manual
+
+run_emulation:
+  stage: run
+  image: ubuntu:latest
+  dependencies:
+    - terraform_deployment
+  variables:
+    UBUNTU_CODENAME: jammy
+    TF_ROOT: ${CI_PROJECT_DIR}/demo-2023/deployment/
+    SECURE_FILES_DOWNLOAD_PATH: ./demo-2023/deployment/
+    TF_VAR_private_key: ${TF_ROOT}ssh-keys/ai-dojo-key
+  before_script:
+    - apt-get update
+    - apt-get install -y software-properties-common curl
+    - add-apt-repository --yes --update ppa:ansible/ansible
+    - apt-get install -y ansible
+    - ansible-galaxy collection install community.docker
+  script:
+    - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | bash
+    - chmod -R a+r ${TF_ROOT}
+    - chmod 400 ${TF_VAR_private_key}
+    - chmod +x ansible_run_command.sh
+    - mv ./ansible_run_command.sh ${CI_PROJECT_DIR}/demo-2023/deployment/ansible_run_command.sh
+    - cd ${CI_PROJECT_DIR}/demo-2023/deployment/
+    - ./ansible_run_command.sh real
+  needs:
+    - job: terraform_deployment
+      artifacts: true
+    - job: ansible_provisioning
   when: manual
 
 terraform_destroy:
@@ -118,8 +181,7 @@ terraform_destroy:
     TF_ROOT: ${CI_PROJECT_DIR}/demo-2023/deployment/
     SECURE_FILES_DOWNLOAD_PATH: ./demo-2023/deployment/
     TF_STATE_NAME: default
-    TF_VAR_public_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}.pub
-    TF_VAR_private_key: ${TF_ROOT}${DEPLOYMENT_KEY_NAME}
+    TF_VAR_public_key: ${TF_ROOT}ssh-keys/ai-dojo-key.pub
   cache:
     key: "${TF_ROOT}"
     paths:
@@ -130,8 +192,9 @@ terraform_destroy:
   script:
     - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | bash
     - chmod -R a+r ${TF_ROOT}
-    - chmod 400 ${TF_VAR_private_key}
     - gitlab-terraform destroy
   resource_group: ${TF_STATE_NAME}
   when: manual
-  needs: []
+  needs:
+    - job: terraform_plan
+      artifacts: true
