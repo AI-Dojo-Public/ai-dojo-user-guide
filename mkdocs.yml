@@ -1,0 +1,88 @@
+site_name: AI Dojo
+site_url: https://ai-dojo.gitlab-pages.ics.muni.cz/ai-dojo
+
+theme:
+  name: material
+  locale: en
+  palette:
+    primary: blue
+  features:
+    - content.tabs.link # Linked code tabs
+    - content.code.copy # Code copy button
+    - navigation.tracking # Anchor tracking
+    - navigation.top # Back-to-top button
+    - search.highlight # Highlight searched terms
+    - toc.follow  # Anchor following
+
+plugins:
+  - search:
+      lang: en
+
+markdown_extensions:
+  - pymdownx.superfences:  # Content tabs  # Admonitions
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:  # Content tabs
+      alternate_style: true
+  - toc:  # Headline permalink
+      permalink: true
+  - admonition  # Admonitions
+  - pymdownx.details  # Admonitions
+  - attr_list  # Attribute lists (allow HTML/CSS)
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.extra  # Random set of extensions? Probably misused in here lol # https://facelessuser.github.io/pymdown-extensions/usage_notes/
+
+nav:
+  - Home: index.md
+#  - Technical documentation:
+#    - Installation:
+#      - Overview: tech/installation/overview.md
+#      - Setup: tech/installation/setup.md
+#      - HTTPS presets:
+#        - Basic setup: tech/installation/https/base-setup.md
+#        - Setup with your own certificate: tech/installation/https/owncert.md
+#      - Troubleshooting: tech/installation/troubleshooting.md
+#      - Adding users: tech/installation/users.md
+#    - System architecture:
+#      - Overview: tech/architecture/overview.md
+#      - Authorization and User Management: tech/security.md
+#    - API Documentation:
+#      - Overview: tech/api/overview.md
+#      - Rest API documentation: tech/api/swagger-docs.md
+#    - Definition documentation:
+#      - Overview: tech/architecture/definitions/README.md
+#      - Upgrade definition: tech/architecture/definitions/upgrade.md
+#      - CHANGELOG: tech/architecture/definitions/CHANGELOG.md
+#    - Exercise log format: tech/log-format.md
+#  - How to prepare an exercise?:
+#    - INJECT Process: INJECT_process/intro/overview.md
+#    - 01 Understand:
+#      - Phase overview: INJECT_process/understand/overview.md
+#    - 02 Specify:
+#      - Phase overview: INJECT_process/specify/overview.md
+#      - Learning objectives: INJECT_process/specify/learning_objectives.md
+#      - Learning activities: INJECT_process/specify/learning_activities.md
+#      - Injects: INJECT_process/specify/injects.md
+#      - Tools: INJECT_process/specify/tools.md
+#      - Exercise specification: INJECT_process/specify/exercise_specification.md
+#      - Advanced approaches: INJECT_process/specify/advanced_approaches.md
+#    - 03 Prepare:
+#      - Phase overview: INJECT_process/prepare/overview.md
+#      - Editor: INJECT_process/prepare/editor.md
+#    - 04 Execute:
+#      - Phase overview: INJECT_process/execute/overview.md
+#    - 05 Reflect:
+#      - Phase overview: INJECT_process/reflect/overview.md
+#  - FAQ: faq.md
+#  - Changelog: changelog.md
+#  - Glossary of Terms: glossary-of-terms.md
+#  - Authors: authors.md
+#  - Report issue: report-issue.md
+#  - Known issues: known-issues.md
+#  - Acknowledgements: acknowledgements.md
+#  - How to cite: how-to-cite.md
+#  - License: license.md

@@ -9,6 +9,22 @@ stages:
   - run
   - cleanup
 
+# Build pages
+pages:
+  image: python:latest
+  stage: build
+  before_script:
+    - python -m venv venv
+    - venv/bin/pip install mkdocs-material
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"
+  script:
+    - venv/bin/mkdocs build --site-dir public
+  artifacts:
+    expire_in: 30 days
+    paths:
+      - public/
+
 terraform_plan:
   stage: build
   image:
