@@ -37,7 +37,18 @@ markdown_extensions:
   - pymdownx.extra  # Random set of extensions? Probably misused in here lol # https://facelessuser.github.io/pymdown-extensions/usage_notes/
 
 nav:
-  - Home: index.md
+  - Overview: index.md
+  - Technical documentation:
+      - Installation: tech/installation.md
+      - System architecture: tech/architecture.md
+      - Components: tech/components.md
+  - User guide:
+      - Quick start: user/quickstart.md
+      - Scenario configuration: user/scenarios.md
+      - Agent configuration: user/agents.md
+      - Execution: user/execution.md
+      - Analysis: user/analysis.md
+      - Advanced: user/advanced.md
 #  - Technical documentation:
 #    - Installation:
 #      - Overview: tech/installation/overview.md
