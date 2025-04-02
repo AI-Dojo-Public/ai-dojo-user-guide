@@ -1,6 +1,43 @@
 services:
+  dojo:
+    image: registry.gitlab.ics.muni.cz:443/ai-dojo/dojo/dojo:latest
+    container_name: dojo
+    restart: always
+    ports:
+      - "127.0.0.1:8002:80"
+    depends_on:
+      dr-emu:
+        condition: service_started
+      cryton-api-proxy:
+        condition: service_started
+    volumes:
+      - dojo_venv:/app/.venv
+# TODO: add kibana
+#      dojo-elk:
+#        condition: service_started
+#     Example of adding a package:
+#    volumes:
+#      - /path/to/package_name:/modules/package_name
+
+  dojo-frontend:
+    image: registry.gitlab.ics.muni.cz:443/ai-dojo/frontend/frontend:latest
+    container_name: dojo-frontend
+    restart: always
+    ports:
+      - "127.0.0.1:8003:80"
+    depends_on:
+      dojo:
+        condition: service_started
+
+# TODO
+#  dojo-elk:
+#    image: ...
+#    restart: always
+#    ports:
+#      - "127.0.0.1:5601:5601"
+
   cryton-rabbit:
-    image: rabbitmq:3.12
+    image: rabbitmq:4.0-management
     container_name: cryton-rabbit
     restart: always
     networks:
@@ -20,7 +57,7 @@ services:
       retries: 5
 
   cryton-postgres:
-    image: postgres:16
+    image: postgres:17
     container_name: cryton-postgres
     restart: always
     networks:
@@ -39,7 +76,7 @@ services:
       retries: 5
 
   cryton-pgbouncer:
-    image: bitnami/pgbouncer:1.22.0
+    image: bitnami/pgbouncer:1.24.0
     container_name: cryton-pgbouncer
     restart: always
     networks:
@@ -58,7 +95,7 @@ services:
       - PGBOUNCER_POOL_MODE=transaction
 
   cryton-hive:
-    image: registry.gitlab.ics.muni.cz:443/cryton/cryton/hive:2
+    image: registry.gitlab.ics.muni.cz:443/cryton/cryton/hive:3
     container_name: cryton-hive
     restart: always
     networks:
@@ -80,7 +117,7 @@ services:
         condition: service_healthy
 
   cryton-api-proxy:
-    image: registry.gitlab.ics.muni.cz:443/cryton/cryton/api-proxy:2
+    image: registry.gitlab.ics.muni.cz:443/cryton/cryton/api-proxy:3
     container_name: cryton-api-proxy
     restart: always
     network_mode: container:cryton-hive
@@ -89,7 +126,7 @@ services:
         condition: service_started
 
   cryton-frontend:
-    image: registry.gitlab.ics.muni.cz:443/cryton/cryton-frontend:2
+    image: registry.gitlab.ics.muni.cz:443/cryton/cryton-frontend:3
     container_name: cryton-frontend
     restart: always
     networks:
@@ -116,7 +153,7 @@ services:
       retries: 5
 
   dr-emu:
-    image: registry.gitlab.ics.muni.cz:443/ai-dojo/dr-emu/dr-emu:0.1.1
+    image: registry.gitlab.ics.muni.cz:443/ai-dojo/dr-emu/dr-emu:0.2.0
     container_name: dr-emu
     restart: always
     networks:
@@ -151,3 +188,4 @@ networks:
 volumes:
   cryton_db_data:
   dr_emu_data:
+  dojo_venv:
