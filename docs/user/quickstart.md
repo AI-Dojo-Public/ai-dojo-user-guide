@@ -2,9 +2,9 @@ Given the large number of components and repositories the AI-Dojo project consis
 and unified approach to project deployment and development. The deployment process differs based on your intentions and
 needs. We consider three categories of needs:
 
-1. Pure users - who want to try out the system, or do analyses of already existing agents without any further development.
-2. Agent and plug-in developers - who want to develop their own agents or AI-Dojo plugins and test them within AI-Dojo.
-3. System developers - who want to extend or modify AI-Dojo codebase. 
+- *Pure users* - who want to try out the system, or do analyses of already existing agents without any further development. 
+- *Agent and plug-in developers* - who want to develop their own agents or AI-Dojo plugins and test them within AI-Dojo.
+- *System developers* - who want to extend or modify AI-Dojo codebase. 
 
 The following guide is structured according to these categories. 
 

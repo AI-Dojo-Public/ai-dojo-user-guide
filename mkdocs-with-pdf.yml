@@ -54,7 +54,6 @@ markdown_extensions:
 nav:
   - Overview: index.md
   - Technical documentation:
-      - Installation: tech/installation.md
       - System architecture: tech/architecture.md
       - Components: tech/components.md
   - User guide:
