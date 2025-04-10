@@ -1,5 +1,3 @@
-In this guide, we will use **Docker Compose** to deploy the whole AI Dojo project.
-
 Given the large number of components and repositories the AI-Dojo project consists of, we provide a relatively simple 
 and unified approach to project deployment and development. The deployment process differs based on your intentions and
 needs. We consider three categories of needs:
@@ -26,15 +24,15 @@ Download the Compose config file to any location:
 
 === "curl"
 
-```shell
-curl -O https://gitlab.com/ai-dojo-public/ai-dojo-user-guide/-/raw/master/docker-compose.yml
-```
+    ```shell
+    curl -O https://gitlab.com/ai-dojo-public/ai-dojo-user-guide/-/raw/master/docker-compose.yml
+    ```
 
 === "wget"
 
-```shell
-wget https://gitlab.com/ai-dojo-public/ai-dojo-user-guide/-/raw/master/docker-compose.yml
-```
+    ```shell
+    wget https://gitlab.com/ai-dojo-public/ai-dojo-user-guide/-/raw/master/docker-compose.yml
+    ```
 
 And then just run it:
 ```shell
