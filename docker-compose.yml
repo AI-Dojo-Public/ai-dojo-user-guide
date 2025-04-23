@@ -20,7 +20,7 @@ services:
       cryton-api-proxy:
         condition: service_started
     volumes:
-      - dojo_venv:/app/.venvzs
+      - dojo_venv:/app/.venv
 
   dojo-frontend:
     image: registry.gitlab.ics.muni.cz:443/ai-dojo/frontend/frontend:latest
