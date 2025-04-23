@@ -159,7 +159,7 @@ services:
       retries: 5
 
   dr-emu:
-    image: registry.gitlab.ics.muni.cz:443/ai-dojo/dr-emu/dr-emu:0.2.0
+    image: registry.gitlab.ics.muni.cz:443/ai-dojo/dr-emu/dr-emu:latest
     container_name: dr-emu
     restart: always
     networks:
