@@ -16,7 +16,7 @@ For pure users the whole system can be easily installed through Docker.
 
 - [Docker Compose](https://docs.docker.com/compose/install/){target="_blank"}
 - `curl` / `wget`
-- System with **4096 MB of RAM** and **2 CPU cores**
+- A **64-bit x86 system** with **4096 MB of RAM** and **2 CPU cores** - we do not provide Docker images for ARM (`linux/amd64`) systems
 
 ### Deployment
 
