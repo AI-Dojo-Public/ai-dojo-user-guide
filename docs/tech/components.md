@@ -127,11 +127,108 @@ scenarios for that system. The agent exposes a REST API that is used to control 
 
 - [Link to the project repository](https://gitlab.com/ai-dojo-public/cyst-agents-netsecenv)
 
+## Agents
+
+### Random agent
+
+Random agent is a simple baseline agent that selects action randomly in each step from available valid actions with 
+uniform probability. This random agent is primarily used as a baseline in comparison with other agents and to evaluate 
+the complexity of the scenario, performance of the defenders and other comparisons. For reproducibility, it is 
+recommended to use fix random seed when using this agent.
+
+- [Link to project repository](https://github.com/stratosphereips/NetSecGameAgents/tree/aidojo-stable/agents/attackers/random)
+
+### Interactive agent
+
+The interactive agent primary use is to allow human users to play the game. It provides either CLI or web interface 
+which visualize the state of the game There are several models of operation of this agent:
+
+- Human, without autocompletion of fields nor assistance.
+- Human, with autocompletion of fields, but without assistance.
+- Human, with autocompletion of fields and LLM assistance.
+
+
+- [Link to project repository](https://github.com/stratosphereips/NetSecGameAgents/tree/aidojo-stable/agents/attackers/interactive_tui)
+
+### Q-learning agent
+
+A **Q-learning agent** learns to act in an environment by **estimating the quality (Q-value)** of taking a certain 
+action in a certain state.
+
+- It keeps a **Q-table**: a lookup table where each entry `Q(s, a)` stores the agent's estimate of the **expected 
+cumulative reward** from state `s` after taking action `a`.
+- The agent **updates** the Q-values after each interaction with the environment, using the formula:
+
+`Q(s, a) ← Q(s, a) + α [ r + γ max_a' Q(s', a') - Q(s, a) ]`
+
+- [Link to project repository](https://github.com/stratosphereips/NetSecGameAgents/tree/aidojo-stable/agents/attackers/q_learning)
+
+### Sarsa agent
+ 
+A **SARSA agent** (State-Action-Reward-State-Action) learns to act in an environment by **updating the value (Q-value)**
+of a state-action pair based on the action it *actually* takes, not the best possible action.
+
+- It keeps a **Q-table**: a lookup table where each entry `Q(s, a)` stores the agent's estimate of the **expected 
+cumulative reward** from state `s` after taking action `a`.
+- The agent **updates** the Q-values after each interaction with the environment, using the formula:
+
+`Q(s, a) ← Q(s, a) + α [ r + γ Q(s', a') - Q(s, a) ]`
+
+- [Link to project repository](https://github.com/stratosphereips/NetSecGameAgents/tree/aidojo-stable/agents/attackers/sarsa)
+
+### LLM agent
+
+The LLM agent is based on the large language model. It uses advance prompting techniques to process the textual 
+description of the role of the agent, its goals, the current state of the game and previous actions to generate the next
+action. Several publicly available language models were tested and can be used with this agent. Details about the agent 
+architecture, the prompts and its performance can be found in [Out of the Cage How Stochastic Parrots Win in Cyber Security
+Environments](https://arxiv.org/pdf/2308.12086)
+
+- [Link to project repository](https://github.com/stratosphereips/NetSecGameAgents/tree/aidojo-stable/agents/attackers/llm_qa)
+
+### Random defender
+
+Random agent is a simple baseline agent that selects action randomly in each step from available valid actions with 
+uniform probability. This random agent is primarly used as a baseline in comparison with other agents and to evaluate 
+the complexity of the scenario, performance of the defenders and other comparisons. For reproducibility, it is 
+recommended to use fix random seed when using this agent.
+
+- [Link to project repository](https://github.com/stratosphereips/NetSecGameAgents/tree/aidojo-stable/agents/defenders/random)
+
+### Stochastic defender
+
+Stochastic defender makes the blocking based on heuristic and probabiliy distribution over the action types. The agent 
+repeatedly checks the logs in each host by using `FindData` action and analyzing the content. This agent implements a 
+detection heuristic that only applies probabilistic detection after certain suspicious patterns have been observed in an
+agent’s behavior. It considers the most recent actions in the log within a **fixed-size time window** (default size is 5)
+to analyze short-term patterns.
+
+The agent checks for three types of suspicious behavior: (1) a high ratio of the same action type in the recent window, 
+(2) multiple consecutive occurrences of the same action type, and (3) frequent repetition of the exact same parametrized
+action across the entire episode. For each check, it compares the observed statistics against predefined thresholds that
+differ for each action type. For instance, some actions are flagged if their proportion in the window is high, while 
+others are flagged if they are repeated too many times consecutively or across the whole episode.
+
+- [Link to project repository](https://github.com/stratosphereips/NetSecGameAgents/tree/aidojo-stable/agents/defenders/probabilistic)
+
+### SLIPS defender
+
+SLIPS defender is based on open-source ML-drived IDS called [Stratoshpere Linux IPS]
+(https://github.com/stratosphereips/StratosphereLinuxIPS). It is using wide range of modules to detect suspicious 
+behavior in the network traffic. SLIPS agent is directly connected to CYST simulation engine as it operates on Netflows,
+not the high-level GameState representation.
+
+- [Link to project repository]()
+
+### Random benign agent
+
+Random benign agent is a limited version of the attacker. It can only perform a subset of action (Finding hosts and data
+and moving data). The agent has a APM limit which can be modified when starting.
+
+- [Link to project repository](https://github.com/stratosphereips/NetSecGameAgents/blob/aidojo-stable/agents/benign/random/benign_random_agent.py)
+
 ## Deployment
 
-### Terraform Deployment
+Deployment of the platform is handled through the docker compose script that is distributed with this user guide.
 
-To ensure smooth user experience, AI-Dojo comes with scripts that streamline the deployment either in a virtual machine
-or on any physical machine. 
-
-- [Link to the project repository](https://gitlab.com/ai-dojo-public/terraform-deployment)
+- [Link to deployment repository](https://gitlab.com/ai-dojo-public/ai-dojo-user-guide)
