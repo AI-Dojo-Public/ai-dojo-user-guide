@@ -48,6 +48,7 @@ nav:
       - Execution: user/execution.md
       - Analysis: user/analysis.md
       - Advanced: user/advanced.md
+  - Acknowledgements: acknowledgements.md
 #  - Technical documentation:
 #    - Installation:
 #      - Overview: tech/installation/overview.md
