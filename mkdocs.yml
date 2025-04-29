@@ -47,7 +47,7 @@ nav:
       - Agent configuration: user/agents.md
       - Execution: user/execution.md
       - Analysis: user/analysis.md
-      - Advanced: user/advanced.md
+      - Going beyond: user/advanced.md
   - Acknowledgements: acknowledgements.md
 #  - Technical documentation:
 #    - Installation:
